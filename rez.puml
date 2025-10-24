@@ -1,0 +1,73 @@
+@startuml
+
+class Link
+
+class Server implement DataLinkLayer, ARP{
+	-read_fd:Integer
+	-write_fd:Integer
+	-_mac_addr:mac_addr
+
+	+Server(read_fd: Integer, write_fd: Integer, mac_addr: Mac)
+	+run_serv()
+	+run_cli()
+	+send_bytes(bitstream: byte[])
+	+receve_bytes():byte[]
+
+ 	+send_tram(payload: String, protocol: Integer)
+    +receve_tram()
+}
+
+package dataStruct {
+	class Tram {
+	 -mac_dest: mac_addr
+	 -mac_src: mac_addr
+	 -protocol: int
+	 -payload: String
+
+	 get_tram():byte*
+	}
+}
+
+package Protocols {
+	interface ARP {
+		- send_arp_response()
+		- send_arp_request(ip: Ip):
+		- receve_arp_response(): Mac
+		- receve_arp_request()
+	}
+}
+
+
+package Layers {
+	interface PhysicalLayer {
+	' envoyer des bitstream dun bout a lautre dun clable '
+		+ send_bytes(bitstream: byte[])
+		+ receve_bytes()
+	}
+
+	interface DataLinkLayer {
+	' envoyer des trames au noeud suivant '
+		- send_tram(paquet: Paquet, ip_next_hop: Ip, protocol: Integer)
+		- receve_tram(bitstream: byte[])
+	}
+
+	interface NetworkLayer {
+	' envoyer des datagram au en choisissant la bonne route '
+		- send_paquet(segment: Segment, ip_dest: Ip)
+		- receve_paquet(paquet: Paquet)
+	}
+
+	interface TransportLayer {
+	' envoyer des segments dune machine a une autre '
+		- send_segment(message: String, port_dest: Integer, ip_dest: Ip)
+		- receve_segment(segment: Segment)
+	}
+
+	interface AppLayer {
+	' envoyer des message dun processus a un autre'
+		- send_message(message: String)
+		- receve_message(message: String)
+	}
+}
+
+@enduml
