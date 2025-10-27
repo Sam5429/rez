@@ -19,34 +19,25 @@ int main() {
   cout << "pipe created" << endl;
 
   // créer le 1er thread
-  mac_addr_t mac1;
-  mac1[0] = 0x01;
-  mac1[1] = 0x23;
-  mac1[2] = 0x45;
-  mac1[3] = 0x67;
-  mac1[4] = 0x89;
-  mac1[5] = 0xa1;
-  Server server1(pipe1[0], pipe2[1], mac1);
-  std::thread tserver_serv(&Server::run_serv, &server1);
+  mac_addr_t mac1 = 0x0123456789a1;
+  ip_addr_t ip1 = 0x012341;
 
-  cout << "first serv created" << endl;
+  Server server1(pipe1[0], pipe2[1], mac1, ip1);
+  std::thread tserver_serv(&Server::run_serv, &server1);
 
   // attend pour évité les soucis d'ordo
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
   // créer le 2eme thread
-  mac_addr_t mac2;
-  mac2[0] = 0x01;
-  mac2[1] = 0x23;
-  mac2[2] = 0x45;
-  mac2[3] = 0x67;
-  mac2[4] = 0x89;
-  mac2[5] = 0xa2;
-  Server server2(pipe2[0], pipe1[1], mac2);
-  std::thread tserver_cli(&Server::run_cli, &server2);
+  mac_addr_t mac2 = 0x0123456789a2;
+  ip_addr_t ip2 = 0x012342;
 
-  cout << "second serv created" << endl;
+  Server server2(pipe2[0], pipe1[1], mac2, ip2);
+  std::thread tserver_cli(&Server::run_cli, &server2);
 
   tserver_cli.join();
   tserver_serv.join();
+
+  cout << "end of main" << endl;
+  return 0;
 }

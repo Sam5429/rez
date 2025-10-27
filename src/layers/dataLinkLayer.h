@@ -7,8 +7,8 @@ public:
   /*
    * create and give the tram to the next layer
    */
-  virtual void send_tram(std::string *payload, ip_addr_t ip_next_hop,
-                         byte protocol) = 0;
+  virtual void send_tram(bitstream_t *payload, ip_addr_t ip_next_hop,
+                         byte protocol[2]) = 0;
 
   /*
    * treat the tram and give the payload to the next layer
