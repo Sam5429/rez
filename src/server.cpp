@@ -31,7 +31,6 @@ mac_addr_t Server::search_arp_table(ip_addr_t ip_addr) {
 
 void Server::run_serv() {
   this->receve_bytes();
-  std::this_thread::sleep_for(std::chrono::seconds(1));
   this->receve_bytes();
 }
 
@@ -50,9 +49,14 @@ void Server::run_cli() {
 }
 
 void Server::send_bytes(bitstream_t *bitstream) {
+  size_t size = bitstream->size();
+  // send the size of the bitstream first
+  if (write(_write_fd, &size, sizeof(size_t)) <= 0) {
+    std::perror("Error writing size to the pipe");
+    exit(-4);
+  };
+
   int bytes_written = write(_write_fd, bitstream->data(), bitstream->size());
-  int eof = '\0';
-  write(_write_fd, &eof, 1);
   if (bytes_written <= 0) {
     std::perror("Error writing to the pipe");
     exit(-4);
@@ -61,22 +65,37 @@ void Server::send_bytes(bitstream_t *bitstream) {
 }
 
 void Server::receve_bytes() {
+  // Lire la taille des données avant de lire les données elles-mêmes
+  size_t data_size = 0;
+  ssize_t size_read = read(_read_fd, &data_size, sizeof(size_t));
+  if (size_read != sizeof(size_t)) {
+    std::perror("Error reading size from the pipe");
+    exit(-4);
+  }
+
   bitstream_t *buffer = new bitstream_t;
   const size_t BUFFER_SIZE = 256; // toute taille de buff supérieur à 1
   char temp_buffer[BUFFER_SIZE];
-  int bytes_read;
+  ssize_t bytes_read;
+  buffer->reserve(data_size);
 
-  while ((bytes_read = read(_read_fd, temp_buffer, BUFFER_SIZE - 1)) > 0) {
-    buffer->insert(buffer->end(), temp_buffer, temp_buffer + bytes_read);
-    if (temp_buffer[(bytes_read) % BUFFER_SIZE - 1] == '\0') {
-      break;
+  size_t total_read = 0;
+  while (total_read < data_size) {
+    bytes_read = read(_read_fd, temp_buffer,
+                      std::min(BUFFER_SIZE, data_size - total_read));
+    if (bytes_read <= 0) {
+      std::perror("Error reading from the pipe");
+      exit(-4);
     }
+    buffer->insert(buffer->end(), temp_buffer, temp_buffer + bytes_read);
+    total_read += bytes_read;
   }
 
-  if (bytes_read < 0) {
-    std::perror("Error reading from the pipe");
-    exit(-4);
+  std::cout << "Buffer contents (hex)(" << bytes_read << "): ";
+  for (auto c : *buffer) {
+    printf("%02x ", static_cast<unsigned char>(c));
   }
+  std::cout << std::endl;
 
   receve_tram(buffer);
 }

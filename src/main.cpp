@@ -26,7 +26,7 @@ int main() {
   std::thread tserver_serv(&Server::run_serv, &server1);
 
   // attend pour évité les soucis d'ordo
-  std::this_thread::sleep_for(std::chrono::seconds(1));
+  // std::this_thread::sleep_for(std::chrono::seconds(1));
 
   // créer le 2eme thread
   mac_addr_t mac2 = 0x0123456789a2;
